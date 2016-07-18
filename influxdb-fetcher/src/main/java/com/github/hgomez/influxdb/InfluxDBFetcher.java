@@ -20,7 +20,7 @@ public class InfluxDBFetcher {
    * 
    * To get tags, GROUP BY tag1, tag2 should be used, ie :
    * 
-   * http://influxdb.example.com:8086 login password collectd_db "SELECT * from cpu_value ORDER BY host, instance, type, type_instance LIMIT 10000";
+   * http://influxdb.example.com:8086 login password collectd_db "SELECT * from cpu_value GROUP BY host, instance, type, type_instance LIMIT 10000";
    *
    * @param args
    */
@@ -29,7 +29,7 @@ public class InfluxDBFetcher {
       System.out.println("usage is : url login password dbname query");
       System.out.println(" ie: http://influxdb.example.com:8086 login password collectd_db \"SELECT * from cpu_value LIMIT 10000\"");
       System.out.println("To get tags, add a GROUP BY clause:");
-      System.out.println(" ie: http://influxdb.example.com:8086 login password collectd_db \"SELECT * from cpu_value ORDER BY host, instance, type, type_instance LIMIT 10000\"");
+      System.out.println(" ie: http://influxdb.example.com:8086 login password collectd_db \"SELECT * from cpu_value GROUP BY host, instance, type, type_instance LIMIT 10000\"");
       System.exit(1);
     }
 
