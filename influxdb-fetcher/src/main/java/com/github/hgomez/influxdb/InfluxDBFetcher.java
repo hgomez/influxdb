@@ -101,8 +101,8 @@ public class InfluxDBFetcher {
         if (time.length() == 20) {
             datetime = parser20.parseDateTime(time);
         }
-        // If time string is 26+ chars longs, there is millisecondes
-        else if (time.length() >= 26) {
+        // If time string is 21+ chars longs, there is millisecondes
+        else if (time.length() >= 21) {
             datetime = parser26.parseDateTime(time);
         }
 
