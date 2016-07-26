@@ -148,21 +148,24 @@ public class InfluxDBFetcher {
                     builderTags.append(escapeSpaceCommaString(value.toString()));
                 }
             } else {
-                if (value instanceof Double) {
-                    builderFields.append(columns.get(i));
-                    builderFields.append('=');
-                    builderFields.append(generateNumeric((Double) value));
-                } else if (value instanceof String) {
-                    builderFields.append(columns.get(i));
-                    builderFields.append("=\"");
-                    builderFields.append(value.toString());
-                    builderFields.append('"');
-                }
+            	// We could get null values, in this case don't copy fieldname
+            	if (value != null) {
+	                if (value instanceof Double) {
+	                    builderFields.append(columns.get(i));
+	                    builderFields.append('=');
+	                    builderFields.append(generateNumeric((Double) value));
+	                } else if (value instanceof String) {
+	                    builderFields.append(columns.get(i));
+	                    builderFields.append("=\"");
+	                    builderFields.append(escapeQuoteCRLFString(value.toString()));
+	                    builderFields.append('"');
+	                }
 
-                // Add virg if not latest value
-                if (i != values.size() - 1) {
-                    builderFields.append(',');
-                }
+	                // Add virg if not latest value
+	                if (i != values.size() - 1) {
+	                    builderFields.append(',');
+	                }
+            	}
             }
         }
 
@@ -201,6 +204,54 @@ public class InfluxDBFetcher {
             nStr = nStr.replace(cs1, cs2);
         }
 
+        cs1 = "\n";
+        cs2 = "\\\n";
+
+        if (nStr.contains(cs1)) {
+            nStr = nStr.replace(cs1, cs2);
+        }
+
+        cs1 = "\r";
+        cs2 = "\\\r";
+
+        if (nStr.contains(cs1)) {
+            nStr = nStr.replace(cs1, cs2);
+        }
+        
+        return nStr;
+    }
+
+    /**
+     * Escape CRLF by /
+     *
+     * @param pStr
+     * @return escaped String or original if nothing was required
+     */
+    public static String escapeQuoteCRLFString(String pStr) {
+
+        String nStr = pStr;
+
+        CharSequence cs1 = "\"";
+        CharSequence cs2 = "\\\"";
+
+        if (nStr.contains(cs1)) {
+            nStr = nStr.replace(cs1, cs2);
+        }
+
+        cs1 = "\n";
+        cs2 = "\\n";
+
+        if (nStr.contains(cs1)) {
+            nStr = nStr.replace(cs1, cs2);
+        }
+
+        cs1 = "\r";
+        cs2 = "\\r";
+
+        if (nStr.contains(cs1)) {
+            nStr = nStr.replace(cs1, cs2);
+        }
+        
         return nStr;
     }
 
