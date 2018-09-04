@@ -58,6 +58,7 @@ public class InfluxDBFetcher {
         }
 
         InfluxDB influxDB = InfluxDBFactory.connect(url, login, password);
+        influxDB.enableGzip();
         Query query = new Query(queryString, dbName);
 
         QueryResult queryResult = influxDB.query(query);
