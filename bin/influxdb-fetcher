@@ -1,0 +1,22 @@
+#!/bin/bash
+#
+# Setup::
+#
+#   wget --no-clobber --output-document=/usr/local/bin/influxdb-fetcher https://raw.githubusercontent.com/hgomez/influxdb/master/bin/influxdb-fetcher
+#   chmod +x /usr/local/bin/influxdb-fetcher
+#
+# Synopsis::
+#
+#   influxdb-fetcher uri username password database query
+#
+
+
+program_name=influxdb-fetcher-1.0.2.jar
+influxdb_fetcher=/var/tmp/${program_name}
+release_url=https://github.com/hgomez/influxdb/releases/download/1.0.2/${program_name}
+
+# Download real program.
+wget --no-clobber --output-document=${influxdb_fetcher} ${release_url}
+
+# Invoke program.
+java -cp ${influxdb_fetcher} com.github.hgomez.influxdb.InfluxDBFetcher "$@"
