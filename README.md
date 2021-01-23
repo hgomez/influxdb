@@ -1,45 +1,95 @@
-# influxdb fetcher tool
+# InfluxDB Fetcher
 
-Use this tool to fetch InfluxDB measurements and dump an ascii file in InfluxDB Wire Protocol.
 
-* Build code
+## About
+Use this program to fetch data from InfluxDB using the HTTP query API and
+export it into InfluxDB line protocol format.
 
-    ```sh
-     cd influxdb-fetcher
-     mvn clean package
-    ```
 
-To get Tags properly generated in Wire Protocol, you should add a GROUP BY clause  
-     
-* Run code
- 
-    ```sh
-     cd influxdb-fetcher
-     java -cp target/influxdb-fetcher-1.0.1-SNAPSHOT.jar com.github.hgomez.influxdb.InfluxDBFetcher http://influxdb.example.com:8086 login password collectd_db "SELECT * from cpu_value GROUP BY host, instance, type, type_instance LIMIT 10000"
-    ```
-You could also transform fields in tags by adding them in command line. In following example, data1 and data2 fields will be put as tags in Wire Protocol, since as of today, there is now way to transform fields in tags (see: https://github.com/influxdata/influxdb/issues/3904) 
+## Synopsis
+```sh
+influxdb-fetcher uri username password database query [fieldstotags]
+```
 
-    ```sh
-     cd influxdb-fetcher
-     java -cp target/influxdb-fetcher-1.0.1-SNAPSHOT.jar com.github.hgomez.influxdb.InfluxDBFetcher http://influxdb.example.com:8086 login password collectd_db "SELECT * from cpu_value GROUP BY host, instance, type, type_instance LIMIT 10000" data1,data2
-    ```
-    
-# Side notes
 
-* Using an ASCII file in WireProtocol will allow you to rework fields and use curl to send metrics to destination influxdb ie :
+### Example
+```sh
+influxdb-fetcher \
+    http://influxdb.example.org:8086 root root aqi_readings \
+    "SELECT station_type, latitude, longitude, aqi_value FROM testdrive GROUP BY station_type LIMIT 100"
+```
 
-    ```sh
-     # Fetch metrics from source collectd_db in influxdb.example.com
-     java -cp target/influxdb-fetcher-1.0.1-SNAPSHOT.jar com.github.hgomez.influxdb.InfluxDBFetcher http://influxdb.example.com:8086 login password collectd_db "SELECT * from cpu_value GROUP BY host, instance, type, type_instance LIMIT 10000" > cpu.wireproto
 
-     # Bring sed magics if need in WireProtocol file
-     # ie:
-     # sed -i -e "s/value\=\([0-9]*\)i/value=\1/g" cpu.wireproto
-     
-     # Post metrics to destination new_db in dest-influxdb.example.com
-     curl -u login:password -i -POST "http://dest-influxdb.example.com:8086/write?db=new_db" --data-binary @cpu.wireproto
-    ```
+## Setup
+```sh
+wget --no-clobber --output-document=/usr/local/bin/influxdb-fetcher https://raw.githubusercontent.com/hgomez/influxdb/master/bin/influxdb-fetcher
+chmod +x /usr/local/bin/influxdb-fetcher
+```
 
-* Java API return numerics as float, so influxdb-fetcher try to figure if number will be a Int64 (terminated by i in WireProtocol) or a Float by checking if a value is an Integer. Some times, a field may be dump as Int64 but should be send as Float. sed example upper should do the trick :)
 
-* By carefully crafting InfluxDB QL requests (using WHERE time), you should be able to fetch sources metrics by batchs, ideally 10 or 20K at a time. This way you'll 'extract part of source metrics or all of them but in smaller chunk. InfluxDB will OOM with too large POST contents. 
+## Advanced usage
+
+
+### Transform fields to tags
+You could also transform fields into tags by adding them as a list of comma-
+separated labels as a last parameter to the command line.
+
+The background of this is that since as of today, there is now way to transform
+fields into tags. See also: https://github.com/influxdata/influxdb/issues/3904.
+
+In the following example, `latitude` and `longitude` fields will be put as tags
+into the line protocol format output.
+```sh
+influxdb-fetcher \
+    http://influxdb.example.org:8086 root root aqi_readings \
+    "SELECT * FROM testdrive GROUP BY station_type LIMIT 100" \
+    latitude,longitude
+```
+
+
+### Rename fields
+
+As the line protocol format is pure ASCII, it is easy to use standard Unix tools
+like `sed` to manipulate the content.
+
+
+```sh
+# Fetch data.
+influxdb-fetcher ... > data.wireproto
+
+# Manipulate data: Rename field.
+sed -i -e "s/foo\=\([0-9.]*\)/bar=\1/g" data.wireproto
+
+# Manipulate data: Cast from Int64 to Float.
+sed -i -e "s/value\=\([0-9]*\)i/value=\1/g" data.wireproto
+
+# Upload data to different destination.
+curl -u login:password -i -POST \
+    "http://dest-influxdb.example.org:8086/write?db=new_db" \
+    --data-binary @data.wireproto
+```
+
+
+## Notes
+
+* To get InfluxDB tags properly populated into line protocol format, you
+  should add a `GROUP BY` clause.
+
+* The Java API returns numeric values as float. InfluxDB Fetcher will try
+  to figure out if numbers will be an Int64 (terminated by i in line protocol)
+  or a Float. Sometimes, a field may be falsly classified as Int64.
+  The `sed` example above might save you here.
+
+* By carefully crafting InfluxQL expressions (using `WHERE time=...`), you
+  should be able to fetch data in batches, ideally 10K-20K at a time.
+  This way you can extract chunks of the source data. The background of this
+  is that InfluxDB will OOM with too large POST requests.
+
+
+## Development
+
+### Build code
+```sh
+cd influxdb-fetcher
+mvn clean package
+```
