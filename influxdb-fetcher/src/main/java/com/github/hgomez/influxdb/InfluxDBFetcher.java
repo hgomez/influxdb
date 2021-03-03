@@ -133,6 +133,7 @@ public class InfluxDBFetcher {
         }
 
         // Add columns/values on line
+        boolean field_added = false;
         for (int i = 1; i < values.size(); i++) {
             Object value = values.get(i);
 
@@ -149,23 +150,28 @@ public class InfluxDBFetcher {
                     builderTags.append(escapeSpaceCommaString(value.toString()));
                 }
             } else {
-            	// We could get null values, in this case don't copy fieldname
+            	// We could get null values, in this case don't copy field name
             	if (value != null) {
+
+	                // Add virg if another field has been added beforehand
+	                if (field_added) {
+	                    builderFields.append(',');
+	                }
+
+	                // Add value
 	                if (value instanceof Double) {
 	                    builderFields.append(columns.get(i));
 	                    builderFields.append('=');
 	                    builderFields.append(generateNumeric((Double) value));
+	                    field_added = true;
 	                } else if (value instanceof String) {
 	                    builderFields.append(columns.get(i));
 	                    builderFields.append("=\"");
 	                    builderFields.append(escapeQuoteCRLFString(value.toString()));
 	                    builderFields.append('"');
+	                    field_added = true;
 	                }
 
-	                // Add virg if not latest value
-	                if (i != values.size() - 1) {
-	                    builderFields.append(',');
-	                }
             	}
             }
         }
