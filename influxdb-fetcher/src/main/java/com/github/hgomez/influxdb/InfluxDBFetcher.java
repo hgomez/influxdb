@@ -4,7 +4,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
+import okhttp3.OkHttpClient;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 import org.influxdb.dto.Query;
@@ -57,7 +59,12 @@ public class InfluxDBFetcher {
             fields2Tags = Arrays.asList(args[5].split("\\s*,\\s*"));
         }
 
-        InfluxDB influxDB = InfluxDBFactory.connect(url, login, password);
+        OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient().newBuilder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(120, TimeUnit.SECONDS)
+                .writeTimeout(120, TimeUnit.SECONDS);
+
+        InfluxDB influxDB = InfluxDBFactory.connect(url, login, password, okHttpClientBuilder);
         influxDB.enableGzip();
         Query query = new Query(queryString, dbName);
 
