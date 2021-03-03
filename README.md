@@ -57,7 +57,7 @@ like `sed` to manipulate the content.
 # Fetch data.
 influxdb-fetcher ... > data.wireproto
 
-# Manipulate data: Rename field.
+# Manipulate schema: Rename field.
 sed -i -e "s/foo\=\([0-9.]*\)/bar=\1/g" data.wireproto
 
 # Manipulate data: Cast from Int64 to Float.
@@ -74,11 +74,6 @@ curl -u login:password -i -POST \
 
 * To get InfluxDB tags properly populated into line protocol format, you
   should add a `GROUP BY` clause.
-
-* The Java API returns numeric values as float. InfluxDB Fetcher will try
-  to figure out if numbers will be an Int64 (terminated by i in line protocol)
-  or a Float. Sometimes, a field may be falsly classified as Int64.
-  The `sed` example above might save you here.
 
 * By carefully crafting InfluxQL expressions (using `WHERE time=...`), you
   should be able to fetch data in batches, ideally 10K-20K at a time.

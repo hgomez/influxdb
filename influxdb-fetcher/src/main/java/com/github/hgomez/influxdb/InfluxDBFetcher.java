@@ -143,11 +143,20 @@ public class InfluxDBFetcher {
                 if (value instanceof Double) {
                     builderTags.append(escapeSpaceCommaString(columns.get(i)));
                     builderTags.append('=');
-                    builderTags.append(generateNumeric((Double) value));
+                    builderTags.append(value.toString());
+                } else if (value instanceof Integer) {
+                    builderTags.append(escapeSpaceCommaString(columns.get(i)));
+                    builderTags.append('=');
+                    builderTags.append(value.toString());
+                    builderTags.append('i');
                 } else if (value instanceof String) {
                     builderTags.append(escapeSpaceCommaString(columns.get(i)));
                     builderTags.append("=");
                     builderTags.append(escapeSpaceCommaString(value.toString()));
+                } else if (value instanceof Boolean) {
+                    builderTags.append(escapeSpaceCommaString(columns.get(i)));
+                    builderTags.append("=");
+                    builderTags.append(value.toString());
                 }
             } else {
             	// We could get null values, in this case don't copy field name
@@ -162,13 +171,24 @@ public class InfluxDBFetcher {
 	                if (value instanceof Double) {
 	                    builderFields.append(columns.get(i));
 	                    builderFields.append('=');
-	                    builderFields.append(generateNumeric((Double) value));
+	                    builderFields.append(value.toString());
+	                    field_added = true;
+	                } else if (value instanceof Integer) {
+	                    builderFields.append(columns.get(i));
+	                    builderFields.append('=');
+	                    builderFields.append(value.toString());
+	                    builderFields.append('i');
 	                    field_added = true;
 	                } else if (value instanceof String) {
 	                    builderFields.append(columns.get(i));
 	                    builderFields.append("=\"");
 	                    builderFields.append(escapeQuoteCRLFString(value.toString()));
 	                    builderFields.append('"');
+	                    field_added = true;
+	                } else if (value instanceof Boolean) {
+	                    builderFields.append(columns.get(i));
+                        builderFields.append('=');
+	                    builderFields.append(value.toString());
 	                    field_added = true;
 	                }
 
@@ -262,24 +282,4 @@ public class InfluxDBFetcher {
         return nStr;
     }
 
-    /**
-     * Generate a String for Numeric Value (in Double), could be Integers or
-     * Float (damn't protocol) Integer value are suffix by i
-     *
-     * @param pValue
-     * @return escaped String or original if nothing was required
-     */
-    public static String generateNumeric(Double pValue) {
-
-        StringBuilder builder = new StringBuilder();
-
-        if ((pValue == Math.rint(pValue))) {
-            builder.append(pValue.longValue());
-            builder.append('i');
-        } else {
-            builder.append(pValue);
-        }
-
-        return builder.toString();
-    }
 }
