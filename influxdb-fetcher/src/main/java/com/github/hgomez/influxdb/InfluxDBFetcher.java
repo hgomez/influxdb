@@ -13,9 +13,6 @@ import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.dto.QueryResult.Result;
 import org.influxdb.dto.QueryResult.Series;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 
 public class InfluxDBFetcher {
     /**
@@ -64,7 +61,7 @@ public class InfluxDBFetcher {
                 .readTimeout(120, TimeUnit.SECONDS)
                 .writeTimeout(120, TimeUnit.SECONDS);
 
-        InfluxDB influxDB = InfluxDBFactory.connect(url, login, password, okHttpClientBuilder);
+        InfluxDB influxDB = InfluxDBFactory.connect(url, login, password, okHttpClientBuilder, InfluxDB.ResponseFormat.MSGPACK);
         influxDB.enableGzip();
         Query query = new Query(queryString, dbName);
 
@@ -93,26 +90,9 @@ public class InfluxDBFetcher {
 
     public static String buildWireString(String serieName, Map<String, String> tags, List<String> columns,
             List<Object> values, List<String> fields2Tags) {
-        // Format could be :
-        // 2016-07-06T13:30:05Z
-        // 2016-07-06T13:55:27.06649Z
-        // 2016-07-06T13:55:26.283844Z
-        DateTimeFormatter parser20 = ISODateTimeFormat.dateTimeNoMillis();
-        DateTimeFormatter parser26 = ISODateTimeFormat.dateTime();
 
-        // Ensure will have a default timestamp
-        DateTime datetime = new DateTime();
-        // timestamp is first value
-        String time = (String) values.get(0);
-
-        // If time string is 20 chars longs, there is no millisecondes
-        if (time.length() == 20) {
-            datetime = parser20.parseDateTime(time);
-        }
-        // If time string is 21+ chars longs, there is millisecondes
-        else if (time.length() >= 21) {
-            datetime = parser26.parseDateTime(time);
-        }
+        // Timestamp is first value
+        Long timestamp = (Long) values.get(0);
 
         // Build WireProtocol Line
         // (https://docs.influxdata.com/influxdb/v0.13/write_protocols/line/)
@@ -208,8 +188,7 @@ public class InfluxDBFetcher {
         builderWire.append(' ');
         builderWire.append(builderFields);
         builderWire.append(' ');
-        builderWire.append(datetime.getMillis());
-        builderWire.append("000000");
+        builderWire.append(timestamp.toString());
 
         return builderWire.toString();
     }
