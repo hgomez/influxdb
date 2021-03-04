@@ -50,23 +50,34 @@ influxdb-fetcher \
 ### Rename fields
 
 As the line protocol format is pure ASCII, it is easy to use standard Unix tools
-like `sed` to manipulate the content.
-
+like `sed` to manipulate the content. For more advanced manipulations, we
+recommend to use Perl. Those are some examples which roughly outline the process.
 
 ```sh
 # Fetch data.
-influxdb-fetcher ... > data.wireproto
+influxdb-fetcher ... > data.lineproto
 
 # Manipulate schema: Rename field.
-sed -i -e "s/foo\=\([0-9.]*\)/bar=\1/g" data.wireproto
+sed -i -e "s/foo\=\([0-9.]*\)/bar=\1/g" data.lineproto
+
+# Manipulate schema: Advanced field renaming with negative lookbehind.
+# This renames all fields not already prefixed with `SonoffSC.`.
+perl -pi -e "
+  s/(?<!SonoffSC\.)AirQuality/SonoffSC\.AirQuality/; \
+  s/(?<!SonoffSC\.)Humidity/SonoffSC\.Humidity/; \
+  s/(?<!SonoffSC\.)Light/SonoffSC\.Light/; \
+  s/(?<!SonoffSC\.)Noise/SonoffSC\.Noise/; \
+  s/(?<!SonoffSC\.)Temperature/SonoffSC\.Temperature/; \
+  " \
+  data.lineproto
 
 # Manipulate data: Cast from Int64 to Float.
-sed -i -e "s/value\=\([0-9]*\)i/value=\1/g" data.wireproto
+sed -i -e "s/value\=\([0-9]*\)i/value=\1/g" data.lineproto
 
 # Upload data to different destination.
 curl -u login:password -i -POST \
-    "http://dest-influxdb.example.org:8086/write?db=new_db" \
-    --data-binary @data.wireproto
+  "http://dest-influxdb.example.org:8086/write?db=new_db" \
+  --data-binary @data.lineproto
 ```
 
 
