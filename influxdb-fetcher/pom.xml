@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.hgomez.influxdb</groupId>
   <artifactId>influxdb-fetcher</artifactId>
-  <version>1.0.3</version>
+  <version>1.0.4-SNAPSHOT</version>
   <name>InfluxDB Fetcher</name>
   <description>Simple InfluxDB Fetcher</description>
 
